@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  # Web server (WordPress)
+  wordpress:
+    image: wordpress:latest
+    volumes:
+      - wordpress_data:/var/www/html  # Persistent storage for WordPress data
+      - ./wp-content:/var/www/html/wp-content  # Mount local wp-content directory
+    environment:
+      VIRTUAL_HOST: 1sourcesystems.com.au  # Set entrypoint for web server (modify if using a custom domain)
+    depends_on:
+      - mysql
+
+  # MySQL database
+  mysql:
+    image: mysql:latest
+    restart: unless-stopped
+    volumes:
+      - mysql_data:/var/lib/mysql  # Persistent storage for MySQL data
+    environment:
+      MYSQL_ROOT_PASSWORD: your_mysql_root_password  # Set a strong password
+      MYSQL_DATABASE: wordpress  # Database name for WordPress
+
+  # Redis cache
+  redis:
+    image: redis:latest
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data  # Persistent storage for Redis data
+
+  # Adminer administration tool
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    ports:
+      - 8080:8080  # Map container port 8080 to host port 8080 for adminer access
+
+  # Portainer container monitoring tool
+  portainer:
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    ports:
+      - 9000:9000  # Map container port 9000 to host port 9000 for portainer access
+    volumes:
+      - portainer_data:/data  # Persistent storage for portainer data
+
+volumes:
+  wordpress_data:  # Persistent volume for WordPress data
+  mysql_data:     # Persistent volume for MySQL data
+  redis_data:     # Persistent volume for Redis data
+  portainer_data:  # Persistent volume for Portainer data
+
+networks:
+  # Define your network name here (adjust based on your podman network setup)
+  my_network:
+    external: true  # Connect containers to your existing network
