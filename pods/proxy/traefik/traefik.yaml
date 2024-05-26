@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"  # Map container port 80 to host port 80 (HTTP)
+      - "443:443"  # Map container port 443 to host port 443 (HTTPS)
+    volumes:
+      - ./traefik.toml:/etc/traefik/traefik.toml:ro  # Mount Traefik configuration file
+      - traefik.d:/traefik/dynamic  # Mount directory for dynamic configuration (optional)
+    networks:
+      - external  # Connect Traefik to the external network (adjust network name if needed)
+
+networks:
+  external:
+    external: true  # Connect to the default Docker network
+
+  # Define providers for VLAN networks (adjust based on your service_vlans.tfvars structure)
+  web-vlan:
+    driver: vlan
+    options:
+      parent: docker_gwbridge  # Adjust based on your network driver
+      vlan_id: $(grep -Eo '"web"'\s*:\s*{\s*vid\s*:\s*(\d+),?\s*}' environments/dev.tfvars | cut -d ',' -f1 | cut -d ':' -f2)
+  db-vlan:
+    driver: vlan
+    options:
+      parent: docker_gwbridge  # Adjust based on your network driver
+      vlan_id: $(grep -Eo '"db"'\s*:\s*{\s*vid\s*:\s*(\d+),?\s*}' environments/dev.tfvars | cut -d ',' -f1 | cut -d ':' -f2)
+  # ... define additional providers for other VLANs
